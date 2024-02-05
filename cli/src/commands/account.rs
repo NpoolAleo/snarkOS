@@ -178,6 +178,24 @@ impl Account {
     }
 }
 
+pub fn new_account(seed: Option<String>) -> Result<snarkos_account::Account<Network>> {
+    // Recover the seed.
+    let seed = match seed {
+        // Recover the field element deterministically.
+        Some(seed) => {
+            Field::new(<Network as Environment>::Field::from_str(&seed).map_err(|e| anyhow!("Invalid seed - {e}"))?)
+        }
+        // Sample a random field element.
+        None => Field::rand(&mut ChaChaRng::from_entropy()),
+    };
+    // Recover the private key from the seed as a field element.
+    let private_key =
+        PrivateKey::try_from(seed).map_err(|_| anyhow!("Failed to convert the seed into a valid private key"))?;
+    // Construct the account.
+    let account = snarkos_account::Account::<Network>::try_from(private_key)?;
+    Ok(account)
+}
+
 // Print the string to an alternate screen, so that the string won't been printed to the terminal.
 fn display_string_discreetly(discreet_string: &str, continue_message: &str) -> Result<()> {
     use crossterm::{
@@ -263,5 +281,27 @@ mod tests {
         let account = Account::New { seed, vanity, discreet: false };
         let actual = account.parse().unwrap();
         assert_eq!(expected, actual);
+    }
+
+    #[test]
+    fn test_new_account_with_seed() {
+        let seed = Some("38868010450269069756484274649022187108349082664538872491798902858296683054657".to_string());
+
+        let expected_pri = String::from("APrivateKey1zkp61PAYmrYEKLtRWeWhUoDpFnGLNuHrCciSqN49T86dw3p");
+        let expected_view = String::from("AViewKey1eYEGtb78FVg38SSYyzAeXnBdnWCba5t5YxUxtkTtvNAE");
+        let expected_pub = String::from("aleo1zecnqchckrzw7dlsyf65g6z5le2rmys403ecwmcafrag0e030yxqrnlg8j");
+
+        let acc = super::new_account(seed).unwrap();
+        assert_eq!(acc.private_key().to_string(), expected_pri);
+        assert_eq!(acc.view_key().to_string(), expected_view);
+        assert_eq!(acc.address().to_string(), expected_pub);
+    }
+
+    #[test]
+    fn test_new_account_without_seed() {
+        let acc = super::new_account(None).unwrap();
+        assert_eq!(acc.private_key().to_string().len(), 59);
+        assert_eq!(acc.view_key().to_string().len(), 53);
+        assert_eq!(acc.address().to_string().len(), 63);
     }
 }

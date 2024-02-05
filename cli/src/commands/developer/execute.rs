@@ -17,14 +17,7 @@ use super::{CurrentNetwork, Developer};
 use snarkvm::prelude::{
     query::Query,
     store::{helpers::memory::ConsensusMemory, ConsensusStore},
-    Address,
-    Identifier,
-    Locator,
-    PrivateKey,
-    Process,
-    ProgramID,
-    Value,
-    VM,
+    Address, Identifier, Locator, PrivateKey, Process, ProgramID, Value, VM,
 };
 
 use anyhow::{anyhow, bail, Result};
@@ -89,6 +82,67 @@ impl Execute {
 
         let locator = Locator::<CurrentNetwork>::from_str(&format!("{}/{}", self.program_id, self.function))?;
         println!("📦 Creating execution transaction for '{}'...\n", &locator.to_string().bold());
+        // Generate the execution transaction.
+        let transaction = {
+            // Initialize an RNG.
+            let rng = &mut rand::thread_rng();
+
+            // Initialize the VM.
+            let store = ConsensusStore::<CurrentNetwork, ConsensusMemory<CurrentNetwork>>::open(None)?;
+            let vm = VM::from(store)?;
+
+            // // Load the program and it's imports into the process.
+            // load_program(&self.query, &mut vm.process().write(), &self.program_id)?;
+
+            // Create a new transaction.
+            vm.execute(&private_key, (self.program_id, self.function), self.inputs.iter(), None, 0, Some(query), rng)?
+        };
+
+        // Check if the public balance is sufficient.
+        if self.record.is_none() {
+            // Fetch the public balance.
+            let address = Address::try_from(&private_key)?;
+            let public_balance = Developer::get_public_balance(&address, &self.query)?;
+
+            // Check if the public balance is sufficient.
+            let storage_cost = transaction
+                .execution()
+                .ok_or_else(|| anyhow!("The transaction does not contain an execution"))?
+                .size_in_bytes()?;
+
+            // Calculate the base fee.
+            // This fee is the minimum fee required to pay for the transaction,
+            // excluding any finalize fees that the execution may incur.
+            let base_fee = storage_cost.saturating_add(self.priority_fee.unwrap_or(0));
+
+            // If the public balance is insufficient, return an error.
+            if public_balance < base_fee {
+                bail!(
+                    "❌ The public balance of {} is insufficient to pay the base fee for `{}`",
+                    public_balance,
+                    locator.to_string().bold()
+                );
+            }
+        }
+
+        println!("✅ Created execution transaction for '{}'", locator.to_string().bold());
+
+        // Determine if the transaction should be broadcast, stored, or displayed to the user.
+        Developer::handle_transaction(&self.broadcast, self.dry_run, &self.store, transaction, locator.to_string())
+    }
+
+    /// Executes an Aleo program function with the provided inputs.
+    #[allow(clippy::format_in_format_args)]
+    pub fn sign_transaction(self, endpoint: String, pri_key: String) -> Result<String> {
+        // Specify the query
+        let query = Query::from(endpoint);
+
+        let program_id = "credits.aleo";
+        let function = "transfer_public";
+        let locator = Locator::<CurrentNetwork>::from_str(&format!("{}/{}", program_id, function))?;
+
+        // Retrieve the private key.
+        let private_key = PrivateKey::from_str(&pri_key)?;
 
         // Generate the execution transaction.
         let transaction = {
@@ -220,6 +274,32 @@ mod tests {
             assert_eq!(execute.program_id, "hello.aleo".try_into().unwrap());
             assert_eq!(execute.function, "hello".try_into().unwrap());
             assert_eq!(execute.inputs, vec!["1u32".try_into().unwrap(), "2u32".try_into().unwrap()]);
+        } else {
+            panic!("Unexpected result of clap parsing!");
+        }
+    }
+
+    #[test]
+    fn test_execute_tx() {
+        let arg_vec = vec![
+            "snarkos",
+            "developer",
+            "execute",
+            "--private-key",
+            "APrivateKey1zkp8CZNn3yeCseEtxuVPbDCwSyhGW6yZKUYKfgXmcpoGPWH",
+            "--query",
+            "http://10.1.7.110:3030",
+            "credits.aleo",
+            "transfer_public",
+            "aleo19rdamt5rmn8w20psejsat5wrxfh0u7dq7sxtn84phhh0jhqka5qsqnkuzk",
+            "500001u64",
+            "--broadcast",
+            "http://10.1.7.110:3030/testnet3/transaction/broadcast",
+        ];
+        let cli = CLI::parse_from(arg_vec);
+
+        if let Command::Developer(Developer::Execute(execute)) = cli.command {
+            let _ = execute.parse();
         } else {
             panic!("Unexpected result of clap parsing!");
         }
