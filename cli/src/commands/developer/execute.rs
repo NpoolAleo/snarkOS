@@ -419,6 +419,9 @@ mod tests {
     use crate::commands::{Command, CLI};
     use std::{thread, time};
 
+    extern crate serde;
+    extern crate serde_json;
+
     #[test]
     fn clap_snarkos_execute() {
         let arg_vec = vec![
@@ -490,9 +493,18 @@ mod tests {
 
             let authorization = SphinxTx::sign1(private_key, to, amount)?;
 
+            let serialized = serde_json::to_string(&authorization).unwrap();
+            let authorization = serde_json::from_str(&serialized).unwrap();
+
             let execution = SphinxTx::plugin2(endpoint, authorization)?;
 
+            let serialized = serde_json::to_string(&execution).unwrap();
+            let execution: Execution<CurrentNetwork> = serde_json::from_str(&serialized).unwrap();
+
             let authorization = SphinxTx::sign3(private_key, execution.clone())?;
+
+            let serialized = serde_json::to_string(&authorization).unwrap();
+            let authorization = serde_json::from_str(&serialized).unwrap();
 
             println!("✅ Created execution transaction for '{}'", SphinxTx::LOCATOR.bold());
 
