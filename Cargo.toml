@@ -1,7 +1,7 @@
 [package]
 name = "snarkos"
 version = "2.2.7"
-authors = [ "The Aleo Team <hello@aleo.org>" ]
+authors = ["The Aleo Team <hello@aleo.org>"]
 description = "A decentralized operating system"
 homepage = "https://aleo.org"
 repository = "https://github.com/AleoHQ/snarkOS"
@@ -10,9 +10,9 @@ keywords = [
   "cryptography",
   "blockchain",
   "decentralized",
-  "zero-knowledge"
+  "zero-knowledge",
 ]
-categories = [ "cryptography", "operating-systems" ]
+categories = ["cryptography", "operating-systems"]
 license = "Apache-2.0"
 edition = "2021"
 rust-version = "1.72.1"
@@ -37,29 +37,30 @@ members = [
   "node/sync/communication-service",
   "node/sync/locators",
   "node/tcp",
-  ".integration"
+  ".integration",
 ]
 
 [workspace.dependencies.snarkvm]
-#git = "https://github.com/AleoHQ/snarkVM.git"
-#rev = "06bd41f"
-version = "=0.16.18"
-features = [ "circuit", "console", "rocks" ]
+git = "https://github.com/NpoolAleo/snarkVM.git"
+rev = "04cde5c03"
+# version = "=0.16.18"
+# path = "../snarkVM"
+features = ["circuit", "console", "rocks"]
 
 [[bin]]
 name = "snarkos"
 path = "snarkos/main.rs"
 
 [features]
-jemalloc = [ "tikv-jemallocator" ]
-metrics = [ "snarkos-node-metrics", "snarkos-node/metrics" ]
+jemalloc = ["tikv-jemallocator"]
+metrics = ["snarkos-node-metrics", "snarkos-node/metrics"]
 
 [dependencies.anyhow]
 version = "1.0.79"
 
 [dependencies.clap]
 version = "4.4"
-features = [ "derive" ]
+features = ["derive"]
 
 [dependencies.crossterm]
 version = "0.27.0"

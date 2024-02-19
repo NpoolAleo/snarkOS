@@ -14,15 +14,19 @@
 
 use super::{CurrentNetwork, Developer};
 
-use snarkvm::prelude::{
-    query::Query,
-    store::{helpers::memory::ConsensusMemory, ConsensusStore},
-    Address, Identifier, Locator, PrivateKey, Process, ProgramID, Value, VM,
-};
-
-use anyhow::{anyhow, bail, Result};
+use anyhow::{anyhow, bail, ensure, Result};
 use clap::Parser;
 use colored::Colorize;
+use snarkvm::{
+    ledger::Execution,
+    prelude::{
+        query::Query,
+        store::{helpers::memory::ConsensusMemory, ConsensusStore},
+        Address, Authorization, Identifier, Locator, PrivateKey, Process, ProgramID, Transaction, Value, VM,
+    },
+    synthesizer::execution_cost,
+};
+
 use std::str::FromStr;
 use zeroize::Zeroize;
 
@@ -133,16 +137,21 @@ impl Execute {
 
     /// Executes an Aleo program function with the provided inputs.
     #[allow(clippy::format_in_format_args)]
-    pub fn sign_transaction(self, endpoint: String, pri_key: String) -> Result<String> {
-        // Specify the query
-        let query = Query::from(endpoint);
+    pub fn parse_all(self) -> Result<String> {
+        // Ensure that the user has specified an action.
+        if !self.dry_run && self.broadcast.is_none() && self.store.is_none() {
+            bail!("❌ Please specify one of the following actions: --broadcast, --dry-run, --store");
+        }
 
-        let program_id = "credits.aleo";
-        let function = "transfer_public";
-        let locator = Locator::<CurrentNetwork>::from_str(&format!("{}/{}", program_id, function))?;
+        // Specify the query
+        let query = Query::from(&self.query);
 
         // Retrieve the private key.
-        let private_key = PrivateKey::from_str(&pri_key)?;
+        let private_key = PrivateKey::from_str(&self.private_key)?;
+
+        let locator = Locator::<CurrentNetwork>::from_str(&format!("{}/{}", self.program_id, self.function))?;
+        println!("📦 Creating execution transaction for '{}'...\n", &locator.to_string().bold());
+        // Generate the execution transaction.
 
         // Generate the execution transaction.
         let transaction = {
@@ -161,18 +170,48 @@ impl Execute {
                 Some(record_string) => Some(Developer::parse_record(&private_key, record_string)?),
                 None => None,
             };
-            let priority_fee = self.priority_fee.unwrap_or(0);
-
-            // Create a new transaction.
-            vm.execute(
-                &private_key,
-                (self.program_id, self.function),
-                self.inputs.iter(),
-                fee_record,
-                priority_fee,
-                Some(query),
-                rng,
-            )?
+            let (program_id, function_name) = (self.program_id, self.function);
+            // Compute the authorization.
+            let authorization = vm.authorize(&private_key, program_id, function_name, self.inputs.iter(), rng)?;
+            // Determine if a fee is required.
+            let is_fee_required = !authorization.is_split();
+            let priority_fee_in_microcredits = 0;
+            // Determine if a priority fee is declared.
+            let is_priority_fee_declared = priority_fee_in_microcredits > 0;
+            // Compute the execution.
+            let execution = vm.execute_authorization_raw(authorization, Some(query.clone()), rng)?;
+            // Compute the fee.
+            let fee = match is_fee_required || is_priority_fee_declared {
+                true => {
+                    // Compute the minimum execution cost.
+                    let (minimum_execution_cost, (_, _)) = execution_cost(&vm, &execution)?;
+                    // Compute the execution ID.
+                    let execution_id = execution.to_execution_id()?;
+                    // Authorize the fee.
+                    let authorization = match fee_record {
+                        Some(record) => vm.authorize_fee_private(
+                            &private_key,
+                            record,
+                            minimum_execution_cost,
+                            priority_fee_in_microcredits,
+                            execution_id,
+                            rng,
+                        )?,
+                        None => vm.authorize_fee_public(
+                            &private_key,
+                            minimum_execution_cost,
+                            priority_fee_in_microcredits,
+                            execution_id,
+                            rng,
+                        )?,
+                    };
+                    // Execute the fee.
+                    Some(vm.execute_fee_authorization_raw(authorization, Some(query.clone()), rng)?)
+                }
+                false => None,
+            };
+            // Return the execute transaction.
+            Transaction::from_execution(execution, fee)?
         };
 
         // Check if the public balance is sufficient.
@@ -206,6 +245,140 @@ impl Execute {
 
         // Determine if the transaction should be broadcast, stored, or displayed to the user.
         Developer::handle_transaction(&self.broadcast, self.dry_run, &self.store, transaction, locator.to_string())
+    }
+}
+
+pub struct SphinxTx {}
+
+impl SphinxTx {
+    const PROGRAM_ID: &str = "credits.aleo";
+    const FUNCTION: &str = "transfer_public";
+    const LOCATOR: &str = "credits.aleo/transfer_public";
+
+    pub fn sign1(private_key: &str, to: &str, amount: &str) -> Result<Authorization<CurrentNetwork>> {
+        // Initialize an RNG.
+        let rng = &mut rand::thread_rng();
+
+        // Initialize the VM.
+        let store: ConsensusStore<snarkvm::prelude::Testnet3, ConsensusMemory<snarkvm::prelude::Testnet3>> =
+            ConsensusStore::<CurrentNetwork, ConsensusMemory<CurrentNetwork>>::open(None)?;
+        let vm: VM<snarkvm::prelude::Testnet3, ConsensusMemory<snarkvm::prelude::Testnet3>> = VM::from(store.clone())?;
+
+        // // Load the program and it's imports into the process.
+        // load_program(&self.query, &mut vm.process().write(), &self.program_id)?;
+        // Retrieve the private key.
+        let private_key = PrivateKey::from_str(private_key)?;
+        let (program_id, function_name) = (SphinxTx::PROGRAM_ID, SphinxTx::FUNCTION);
+        let inputs = vec![to, amount];
+        // Compute the authorization.
+        vm.authorize(&private_key, program_id, function_name, inputs, rng)
+    }
+
+    pub fn plugin2(endpoint: &str, authorization: Authorization<CurrentNetwork>) -> Result<Execution<CurrentNetwork>> {
+        // Specify the query
+        let query = Query::from(endpoint);
+
+        println!("📦 Creating execution transaction for '{}'...\n", &SphinxTx::LOCATOR.bold());
+
+        // Check if the public balance is sufficient.
+        // Fetch the public balance.
+        let from =
+            Address::<CurrentNetwork>::from_str("aleo1rhgdu77hgyqd3xjj8ucu3jj9r2krwz6mnzyd80gncr5fxcwlh5rsvzp9px")?;
+        let public_balance = Developer::get_public_balance(&from, endpoint)?;
+
+        // base fee,That's it for now
+        let base_fee = 1388;
+        // If the public balance is insufficient, return an error.
+        if public_balance < base_fee {
+            bail!(
+                "❌ The public balance of {} is insufficient to pay the base fee for `{}`",
+                public_balance,
+                SphinxTx::LOCATOR.bold()
+            );
+        }
+
+        // Initialize an RNG.
+        let rng = &mut rand::thread_rng();
+        // Initialize the VM.
+        let store = ConsensusStore::<CurrentNetwork, ConsensusMemory<CurrentNetwork>>::open(None)?;
+        let vm: VM<snarkvm::prelude::Testnet3, ConsensusMemory<snarkvm::prelude::Testnet3>> = VM::from(store.clone())?;
+
+        // Compute the execution.
+        vm.execute_authorization_raw(authorization, Some(query.clone()), rng)
+    }
+
+    pub fn sign3(private_key: &str, execution: Execution<CurrentNetwork>) -> Result<Authorization<CurrentNetwork>> {
+        // Initialize an RNG.
+        let rng = &mut rand::thread_rng();
+        // Initialize the VM.
+        let store = ConsensusStore::<CurrentNetwork, ConsensusMemory<CurrentNetwork>>::open(None)?;
+        let vm: VM<snarkvm::prelude::Testnet3, ConsensusMemory<snarkvm::prelude::Testnet3>> = VM::from(store.clone())?;
+
+        let (minimum_execution_cost, (_, _)) = execution_cost(&vm, &execution)?;
+
+        // Compute the execution ID.
+        let execution_id = execution.to_execution_id()?;
+        let private_key = PrivateKey::from_str(private_key)?;
+        vm.authorize_fee_public(&private_key, minimum_execution_cost, 0, execution_id, rng)
+    }
+
+    pub fn broadcast_transaction(
+        endpoint: &str,
+        broadcast: String,
+        authorization: Authorization<CurrentNetwork>,
+        execution: Execution<CurrentNetwork>,
+    ) -> Result<String> {
+        // Specify the query
+        let query = Query::from(endpoint);
+
+        // Initialize an RNG.
+        let rng = &mut rand::thread_rng();
+        // Initialize the VM.
+        let store = ConsensusStore::<CurrentNetwork, ConsensusMemory<CurrentNetwork>>::open(None)?;
+        let vm: VM<snarkvm::prelude::Testnet3, ConsensusMemory<snarkvm::prelude::Testnet3>> = VM::from(store.clone())?;
+
+        // Execute the fee.
+        let fee = Some(vm.execute_fee_authorization_raw(authorization, Some(query.clone()), rng)?);
+
+        // Return the execute transaction.
+        let transaction = Transaction::from_execution(execution, fee)?;
+
+        // Get the transaction id.
+        let transaction_id = transaction.id();
+
+        // Ensure the transaction is not a fee transaction.
+        ensure!(!transaction.is_fee(), "The transaction is a fee transaction and cannot be broadcast");
+        if let Transaction::Execute(..) = transaction {
+            match ureq::post(&broadcast).send_json(&transaction) {
+                Ok(id) => {
+                    // Remove the quotes from the response.
+                    let response_string = id.into_string()?.trim_matches('\"').to_string();
+                    ensure!(
+                        response_string == transaction_id.to_string(),
+                        "The response does not match the transaction id. ({response_string} != {transaction_id})"
+                    );
+                }
+                Err(error) => bail!(error),
+            };
+        } else {
+            bail!("failed to broadcast transaction:{}", transaction_id.to_string())
+        };
+        // Output the transaction id.
+        Ok(transaction_id.to_string())
+    }
+
+    pub fn sync_transaction(sync: String, transaction_id: String) -> Result<Option<String>> {
+        match ureq::get(&format!("{sync}/transaction/{transaction_id}")).call() {
+            Ok(resp) => {
+                // if resp != None {}
+                println!("success: {:#?}", resp);
+                Ok(None)
+            }
+            Err(error) => {
+                println!("error: {:#?}", error);
+                bail!(error)
+            }
+        }
     }
 }
 
@@ -244,6 +417,7 @@ fn load_program(
 mod tests {
     use super::*;
     use crate::commands::{Command, CLI};
+    use std::{thread, time};
 
     #[test]
     fn clap_snarkos_execute() {
@@ -303,5 +477,45 @@ mod tests {
         } else {
             panic!("Unexpected result of clap parsing!");
         }
+    }
+
+    #[test]
+    fn test_sphinx_tx() {
+        fn _test_sphinx_tx() -> Result<String> {
+            let net_name = "testnet3";
+            let endpoint = "http://10.1.7.110:3030";
+            let private_key = "APrivateKey1zkp8CZNn3yeCseEtxuVPbDCwSyhGW6yZKUYKfgXmcpoGPWH";
+            let to: &str = "aleo19rdamt5rmn8w20psejsat5wrxfh0u7dq7sxtn84phhh0jhqka5qsqnkuzk";
+            let amount = "500001u64";
+
+            let authorization = SphinxTx::sign1(private_key, to, amount)?;
+
+            let execution = SphinxTx::plugin2(endpoint, authorization)?;
+
+            let authorization = SphinxTx::sign3(private_key, execution.clone())?;
+
+            println!("✅ Created execution transaction for '{}'", SphinxTx::LOCATOR.bold());
+
+            let transaction_id = SphinxTx::broadcast_transaction(
+                endpoint,
+                format!("{}/{}/{}", endpoint, net_name, "transaction/broadcast"),
+                authorization,
+                execution,
+            )?;
+
+            let mut index = 0;
+            while index < 5 {
+                index += 1;
+                let _ = SphinxTx::sync_transaction(format!("{}/{}", endpoint, net_name), transaction_id.to_string());
+                let ten_millis = time::Duration::from_secs(60);
+                thread::sleep(ten_millis)
+            }
+
+            Ok(transaction_id.to_string())
+        }
+
+        let _ = _test_sphinx_tx();
+        // Determine if the transaction should be broadcast, stored, or displayed to the user.
+        // Developer::handle_transaction(&self.broadcast, self.dry_run, &self.store, transaction, LOCATOR.to_string())
     }
 }
