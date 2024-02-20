@@ -16,9 +16,6 @@ categories = ["cryptography", "operating-systems"]
 license = "Apache-2.0"
 edition = "2021"
 
-[workspace]
-members = ["cli", "cli/commands"]
-
 [features]
 default = ["snarkos-node/metrics"]
 

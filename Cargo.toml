@@ -47,6 +47,9 @@ rev = "04cde5c03"
 # path = "../snarkVM"
 features = ["circuit", "console", "rocks"]
 
+[lib]
+path = "cli/src/lib.rs"
+
 [[bin]]
 name = "snarkos"
 path = "snarkos/main.rs"
