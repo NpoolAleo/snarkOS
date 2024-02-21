@@ -251,9 +251,9 @@ impl Execute {
 pub struct SphinxTx {}
 
 impl SphinxTx {
-    const PROGRAM_ID: &str = "credits.aleo";
-    const FUNCTION: &str = "transfer_public";
-    const LOCATOR: &str = "credits.aleo/transfer_public";
+    const PROGRAM_ID: &'static str = "credits.aleo";
+    const FUNCTION: &'static str = "transfer_public";
+    const LOCATOR: &'static str = "credits.aleo/transfer_public";
 
     pub fn sign1(private_key: &str, to: &str, amount: &str) -> Result<Authorization<CurrentNetwork>> {
         // Initialize an RNG.

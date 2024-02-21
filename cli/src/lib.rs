@@ -19,5 +19,4 @@
 extern crate thiserror;
 
 pub mod commands;
-pub use commands;
 pub mod helpers;
