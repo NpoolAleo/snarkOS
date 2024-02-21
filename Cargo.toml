@@ -22,6 +22,7 @@ members = [
   "account",
   "cli",
   "display",
+  "sphinx",
   "node",
   "node/bft",
   "node/bft/events",
@@ -85,6 +86,10 @@ version = "=2.2.7"
 
 [dependencies.snarkos-display]
 path = "./display"
+version = "=2.2.7"
+
+[dependencies.snarkos-sphinx]
+path = "./sphinx"
 version = "=2.2.7"
 
 [dependencies.snarkos-node]

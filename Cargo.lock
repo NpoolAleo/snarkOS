@@ -3097,6 +3097,7 @@ dependencies = [
  "snarkos-node-router",
  "snarkos-node-sync",
  "snarkos-node-tcp",
+ "snarkos-sphinx",
  "tikv-jemallocator",
  "walkdir",
 ]
@@ -3481,6 +3482,22 @@ dependencies = [
  "tokio",
  "tokio-util",
  "tracing",
+]
+
+[[package]]
+name = "snarkos-sphinx"
+version = "2.2.7"
+dependencies = [
+ "anyhow",
+ "colored",
+ "nix",
+ "rand",
+ "rand_chacha",
+ "serde",
+ "serde_json",
+ "snarkos-account",
+ "snarkvm",
+ "ureq",
 ]
 
 [[package]]

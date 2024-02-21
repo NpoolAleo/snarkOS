@@ -12,4 +12,4 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-pub use snarkos_cli as cli;
+pub use snarkos_sphinx as sphinx;

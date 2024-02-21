@@ -30,19 +30,8 @@ pub use transfer_private::*;
 use snarkvm::{
     package::Package,
     prelude::{
-        block::Transaction,
-        Address,
-        Ciphertext,
-        Identifier,
-        Literal,
-        Plaintext,
-        PrivateKey,
-        Program,
-        ProgramID,
-        Record,
-        ToBytes,
-        Value,
-        ViewKey,
+        block::Transaction, Address, Ciphertext, Identifier, Literal, Plaintext, PrivateKey, Program, ProgramID,
+        Record, ToBytes, Value, ViewKey,
     },
 };
 
