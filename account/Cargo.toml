@@ -1,7 +1,7 @@
 [package]
 name = "snarkos-account"
 version = "2.2.7"
-authors = [ "The Aleo Team <hello@aleo.org>" ]
+authors = ["The Aleo Team <hello@aleo.org>"]
 description = "Account for a decentralized operating system"
 homepage = "https://aleo.org"
 repository = "https://github.com/AleoHQ/snarkOS"
@@ -10,9 +10,9 @@ keywords = [
   "cryptography",
   "blockchain",
   "decentralized",
-  "zero-knowledge"
+  "zero-knowledge",
 ]
-categories = [ "cryptography", "operating-systems" ]
+categories = ["cryptography", "operating-systems"]
 license = "Apache-2.0"
 edition = "2021"
 
@@ -28,4 +28,4 @@ default-features = false
 
 [dependencies.snarkvm]
 workspace = true
-features = [ "console" ]
+features = ["console"]
