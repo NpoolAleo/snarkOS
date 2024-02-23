@@ -1997,6 +1997,17 @@ dependencies = [
 ]
 
 [[package]]
+name = "nix"
+version = "0.27.1"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "2eb04e9c688eff1c89d72b407f168cf79bb9e867a9d3323ed6c01519eb9cc053"
+dependencies = [
+ "bitflags 2.4.2",
+ "cfg-if",
+ "libc",
+]
+
+[[package]]
 name = "no-std-compat"
 version = "0.4.1"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -3124,7 +3135,7 @@ dependencies = [
  "colored",
  "crossterm",
  "indexmap 2.1.0",
- "nix",
+ "nix 0.26.4",
  "num_cpus",
  "parking_lot",
  "rand",
@@ -3490,7 +3501,7 @@ version = "2.2.7"
 dependencies = [
  "anyhow",
  "colored",
- "nix",
+ "nix 0.27.1",
  "rand",
  "rand_chacha",
  "serde",
