@@ -13,3 +13,4 @@
 // limitations under the License.
 
 pub use snarkos_sphinx as sphinx;
+pub use snarkos_account as account;
