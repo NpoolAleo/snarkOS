@@ -12,7 +12,6 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-
 use core::str::FromStr;
 use rand::SeedableRng;
 use rand_chacha::ChaChaRng;
@@ -21,8 +20,9 @@ use anyhow::{anyhow, bail, ensure, Result};
 use colored::Colorize;
 use snarkvm::{
     console::{
-        account::PrivateKey,
+        account::{ComputeKey, PrivateKey},
         prelude::{Environment, Uniform},
+        program::Network,
         types::Field,
     },
     ledger::Execution,
@@ -34,6 +34,7 @@ use snarkvm::{
     synthesizer::execution_cost,
 };
 type CurrentNetwork = snarkvm::prelude::Testnet3;
+pub type CurrentAddress = Address<CurrentNetwork>;
 
 pub fn new_account(seed: Option<String>) -> Result<snarkos_account::Account<CurrentNetwork>> {
     // Recover the seed.
@@ -51,6 +52,11 @@ pub fn new_account(seed: Option<String>) -> Result<snarkos_account::Account<Curr
     // Construct the account.
     let account = snarkos_account::Account::<CurrentNetwork>::try_from(private_key)?;
     Ok(account)
+}
+
+pub fn check_pub_address(pub_addr: &str) -> Result<Address<CurrentNetwork>> {
+    let pubaddr = Address::<CurrentNetwork>::from_str(pub_addr)?;
+    Ok(pubaddr)
 }
 
 pub struct SphinxTx {}
@@ -80,6 +86,7 @@ impl SphinxTx {
 
     pub fn gen_tx_execution(
         endpoint: &str,
+        from: &str,
         authorization: Authorization<CurrentNetwork>,
     ) -> Result<Execution<CurrentNetwork>> {
         // Specify the query
@@ -89,8 +96,7 @@ impl SphinxTx {
 
         // Check if the public balance is sufficient.
         // Fetch the public balance.
-        let from =
-            Address::<CurrentNetwork>::from_str("aleo1rhgdu77hgyqd3xjj8ucu3jj9r2krwz6mnzyd80gncr5fxcwlh5rsvzp9px")?;
+        let from = Address::<CurrentNetwork>::from_str(from)?;
         let public_balance = SphinxTx::get_public_balance(&from, endpoint)?;
 
         // base fee,That's it for now
@@ -232,6 +238,7 @@ mod tests {
             let net_name = "testnet3";
             let endpoint = "http://10.1.7.110:3030";
             let private_key = "APrivateKey1zkp8CZNn3yeCseEtxuVPbDCwSyhGW6yZKUYKfgXmcpoGPWH";
+            let from: &str = "aleo1rhgdu77hgyqd3xjj8ucu3jj9r2krwz6mnzyd80gncr5fxcwlh5rsvzp9px";
             let to: &str = "aleo19rdamt5rmn8w20psejsat5wrxfh0u7dq7sxtn84phhh0jhqka5qsqnkuzk";
             let amount = "500001u64";
 
@@ -240,7 +247,7 @@ mod tests {
             let serialized = serde_json::to_string(&authorization).unwrap();
             let authorization = serde_json::from_str(&serialized).unwrap();
 
-            let execution = SphinxTx::gen_tx_execution(endpoint, authorization)?;
+            let execution = SphinxTx::gen_tx_execution(endpoint, from, authorization)?;
 
             let serialized = serde_json::to_string(&execution).unwrap();
             let execution: Execution<CurrentNetwork> = serde_json::from_str(&serialized).unwrap();
