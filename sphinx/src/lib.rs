@@ -12,6 +12,8 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
+pub mod sphinx{
+
 use core::str::FromStr;
 use rand::SeedableRng;
 use rand_chacha::ChaChaRng;
@@ -293,4 +295,5 @@ mod tests {
         assert_eq!(acc.view_key().to_string().len(), 53);
         assert_eq!(acc.address().to_string().len(), 63);
     }
+}
 }
