@@ -53,11 +53,11 @@ rev = "04cde5c03"
 features = ["circuit", "console", "rocks"]
 
 [lib]
-path = "snarkos/lib.rs"
+path = "sphinx/lib.rs"
 
-# [[bin]]
-# name = "snarkos"
-# path = "snarkos/main.rs"
+[[bin]]
+name = "snarkos"
+path = "snarkos/main.rs"
 
 [features]
 jemalloc = ["tikv-jemallocator"]
