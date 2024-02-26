@@ -96,8 +96,7 @@ impl SphinxTx {
 
         // Check if the public balance is sufficient.
         // Fetch the public balance.
-        let from = Address::<CurrentNetwork>::from_str(from)?;
-        let public_balance = SphinxTx::get_public_balance(&from, endpoint)?;
+        let public_balance = SphinxTx::get_public_balance(from, endpoint)?;
 
         // base fee,That's it for now
         let base_fee = 1388;
@@ -198,7 +197,8 @@ impl SphinxTx {
     }
 
     /// Fetch the public balance in microcredits associated with the address from the given endpoint.
-    pub fn get_public_balance(address: &Address<CurrentNetwork>, endpoint: &str) -> Result<u64> {
+    pub fn get_public_balance(from: &str, endpoint: &str) -> Result<u64> {
+        let address = Address::<CurrentNetwork>::from_str(from)?;
         // Send a request to the query node.
         let response = ureq::get(&format!("{endpoint}/testnet3/program/credits.aleo/mapping/account/{address}")).call();
 
