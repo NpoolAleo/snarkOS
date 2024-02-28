@@ -225,8 +225,8 @@ impl SphinxTx {
 
 #[derive(Serialize, Deserialize)]
 pub struct BroadcastInfo {
-    tx_execution: Execution<CurrentNetwork>,
-    fee_authorization: Authorization<CurrentNetwork>,
+    pub tx_execution: Execution<CurrentNetwork>,
+    pub fee_authorization: Authorization<CurrentNetwork>,
 }
 
 #[cfg(test)]
