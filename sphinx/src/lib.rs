@@ -139,10 +139,11 @@ impl SphinxTx {
 
     pub fn broadcast_transaction(
         endpoint: &str,
-        broadcast: String,
+        net_name: &str,
         authorization: Authorization<CurrentNetwork>,
         execution: Execution<CurrentNetwork>,
     ) -> Result<String> {
+        let query_url = format!("{}/{}/transaction/broadcast", endpoint, net_name);
         // Specify the query
         let query = Query::from(endpoint);
 
@@ -164,7 +165,7 @@ impl SphinxTx {
         // Ensure the transaction is not a fee transaction.
         ensure!(!transaction.is_fee(), "The transaction is a fee transaction and cannot be broadcast");
         if let Transaction::Execute(..) = transaction {
-            match ureq::post(&broadcast).send_json(&transaction) {
+            match ureq::post(&query_url).send_json(&transaction) {
                 Ok(id) => {
                     // Remove the quotes from the response.
                     let response_string = id.into_string()?.trim_matches('\"').to_string();
@@ -182,8 +183,9 @@ impl SphinxTx {
         Ok(transaction_id.to_string())
     }
 
-    pub fn sync_transaction(sync: String, transaction_id: String) -> Result<Option<String>> {
-        match ureq::get(&format!("{sync}/transaction/{transaction_id}")).call() {
+    pub fn sync_transaction(endpoint: &str, net_name: &str, transaction_id: String) -> Result<Option<String>> {
+        let query_url = format!("{}/{}", endpoint, net_name);
+        match ureq::get(&format!("{query_url}/transaction/{transaction_id}")).call() {
             Ok(resp) => {
                 // if resp != None {}
                 println!("success: {:#?}", resp);
@@ -265,19 +267,13 @@ mod tests {
 
             println!("✅ Created execution transaction for '{}'", SphinxTx::LOCATOR.bold());
 
-            let transaction_id = SphinxTx::broadcast_transaction(
-                endpoint,
-                format!("{}/{}/{}", endpoint, net_name, "transaction/broadcast"),
-                authorization,
-                execution,
-            )?;
+            let transaction_id = SphinxTx::broadcast_transaction(endpoint, net_name, authorization, execution)?;
 
             let mut index = 0;
             while index < 5 {
                 index += 1;
-                let _ = SphinxTx::sync_transaction(format!("{}/{}", endpoint, net_name), transaction_id.to_string());
-                let ten_millis = time::Duration::from_secs(60);
-                thread::sleep(ten_millis)
+                let _ = SphinxTx::sync_transaction(endpoint, net_name, transaction_id.to_string());
+                thread::sleep(time::Duration::from_secs(30))
             }
 
             Ok(transaction_id.to_string())
