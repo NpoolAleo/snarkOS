@@ -34,6 +34,7 @@ use snarkvm::{
 };
 pub type CurrentNetwork = snarkvm::prelude::Testnet3;
 pub type CurrentAddress = Address<CurrentNetwork>;
+use serde::{Deserialize, Serialize};
 
 pub fn new_account(seed: Option<String>) -> Result<snarkos_account::Account<CurrentNetwork>> {
     // Recover the seed.
@@ -220,6 +221,12 @@ impl SphinxTx {
             Err(err) => bail!("Failed to fetch balance for {address}: {err}"),
         }
     }
+}
+
+#[derive(Serialize, Deserialize)]
+pub struct BroadcastInfo {
+    tx_execution: Execution<CurrentNetwork>,
+    fee_authorization: Authorization<CurrentNetwork>,
 }
 
 #[cfg(test)]
