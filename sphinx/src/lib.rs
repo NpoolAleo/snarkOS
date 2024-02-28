@@ -20,9 +20,8 @@ use anyhow::{anyhow, bail, ensure, Result};
 use colored::Colorize;
 use snarkvm::{
     console::{
-        account::{ComputeKey, PrivateKey},
+        account::PrivateKey,
         prelude::{Environment, Uniform},
-        program::Network,
         types::Field,
     },
     ledger::Execution,
@@ -33,7 +32,7 @@ use snarkvm::{
     },
     synthesizer::execution_cost,
 };
-type CurrentNetwork = snarkvm::prelude::Testnet3;
+pub type CurrentNetwork = snarkvm::prelude::Testnet3;
 pub type CurrentAddress = Address<CurrentNetwork>;
 
 pub fn new_account(seed: Option<String>) -> Result<snarkos_account::Account<CurrentNetwork>> {
