@@ -12,12 +12,11 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
+use anyhow::{anyhow, bail, ensure, Result};
+use colored::Colorize;
 use core::str::FromStr;
 use rand::SeedableRng;
 use rand_chacha::ChaChaRng;
-
-use anyhow::{anyhow, bail, ensure, Result};
-use colored::Colorize;
 use snarkvm::{
     console::{
         account::PrivateKey,
@@ -32,6 +31,8 @@ use snarkvm::{
     },
     synthesizer::execution_cost,
 };
+use std::cell::RefCell;
+use std::rc::Rc;
 pub type CurrentNetwork = snarkvm::prelude::Testnet3;
 pub type CurrentAddress = Address<CurrentNetwork>;
 use serde::{Deserialize, Serialize};
@@ -183,17 +184,22 @@ impl SphinxTx {
         Ok(transaction_id.to_string())
     }
 
-    pub fn sync_transaction(endpoint: &str, net_name: &str, transaction_id: String) -> Result<Option<String>> {
+    pub fn sync_transaction(endpoint: &str, net_name: &str, transaction_id: String) -> Result<bool> {
         let query_url = format!("{}/{}", endpoint, net_name);
         match ureq::get(&format!("{query_url}/transaction/{transaction_id}")).call() {
             Ok(resp) => {
-                // if resp != None {}
-                println!("success: {:#?}", resp);
-                Ok(None)
+                let resp_text = resp.status_text().to_string();
+                if resp_text.contains("OK") {
+                    return Ok(true);
+                }
+                bail!(resp_text)
             }
             Err(error) => {
-                println!("error: {:#?}", error);
-                bail!(error)
+                let err_text = format!("{:#?}", error);
+                if err_text.contains("Internal Server Error") {
+                    return Ok(false);
+                }
+                bail!(err_text)
             }
         }
     }
@@ -272,7 +278,8 @@ mod tests {
             let mut index = 0;
             while index < 5 {
                 index += 1;
-                let _ = SphinxTx::sync_transaction(endpoint, net_name, transaction_id.to_string());
+                let resp = SphinxTx::sync_transaction(endpoint, net_name, transaction_id.to_string());
+                println!("{:#?}", resp);
                 thread::sleep(time::Duration::from_secs(30))
             }
 
