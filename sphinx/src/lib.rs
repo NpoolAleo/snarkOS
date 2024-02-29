@@ -31,8 +31,7 @@ use snarkvm::{
     },
     synthesizer::execution_cost,
 };
-use std::cell::RefCell;
-use std::rc::Rc;
+
 pub type CurrentNetwork = snarkvm::prelude::Testnet3;
 pub type CurrentAddress = Address<CurrentNetwork>;
 use serde::{Deserialize, Serialize};
@@ -93,8 +92,6 @@ impl SphinxTx {
         // Specify the query
         let query = Query::from(endpoint);
 
-        println!("📦 Creating execution transaction for '{}'...\n", &SphinxTx::LOCATOR.bold());
-
         // Check if the public balance is sufficient.
         // Fetch the public balance.
         let public_balance = SphinxTx::get_public_balance(from, endpoint)?;
@@ -104,7 +101,7 @@ impl SphinxTx {
         // If the public balance is insufficient, return an error.
         if public_balance < base_fee {
             bail!(
-                "❌ The public balance of {} is insufficient to pay the base fee for `{}`",
+                "the public balance {} is insufficient to pay the base fee for `{}`",
                 public_balance,
                 SphinxTx::LOCATOR.bold()
             );
@@ -240,7 +237,6 @@ pub struct BroadcastInfo {
 #[cfg(test)]
 mod tests {
     use super::*;
-    use colored::Colorize;
     use std::{thread, time};
 
     extern crate serde;
@@ -253,8 +249,8 @@ mod tests {
             let endpoint = "http://10.1.7.110:3030";
             let private_key = "APrivateKey1zkp8CZNn3yeCseEtxuVPbDCwSyhGW6yZKUYKfgXmcpoGPWH";
             let from: &str = "aleo1rhgdu77hgyqd3xjj8ucu3jj9r2krwz6mnzyd80gncr5fxcwlh5rsvzp9px";
-            let to: &str = "aleo19rdamt5rmn8w20psejsat5wrxfh0u7dq7sxtn84phhh0jhqka5qsqnkuzk";
-            let amount = "500001u64";
+            let to: &str = "aleo1wa2p9vzu86mx4vjklwyvpgpcpt5hzqshn3av0ltvc9czym94vufqyc60m4";
+            let amount = "500000001u64";
 
             let authorization = SphinxTx::gen_tx_authorization(private_key, to, amount)?;
 
@@ -270,8 +266,6 @@ mod tests {
 
             let serialized = serde_json::to_string(&authorization).unwrap();
             let authorization = serde_json::from_str(&serialized).unwrap();
-
-            println!("✅ Created execution transaction for '{}'", SphinxTx::LOCATOR.bold());
 
             let transaction_id = SphinxTx::broadcast_transaction(endpoint, net_name, authorization, execution)?;
 
