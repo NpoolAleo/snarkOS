@@ -1,7 +1,7 @@
 [package]
 name = "snarkos"
 version = "2.2.7"
-authors = [ "The Aleo Team <hello@aleo.org>" ]
+authors = ["The Aleo Team <hello@aleo.org>"]
 description = "A decentralized operating system"
 homepage = "https://aleo.org"
 repository = "https://github.com/AleoNet/snarkOS"
@@ -10,9 +10,9 @@ keywords = [
   "cryptography",
   "blockchain",
   "decentralized",
-  "zero-knowledge"
+  "zero-knowledge",
 ]
-categories = [ "cryptography", "operating-systems" ]
+categories = ["cryptography", "operating-systems"]
 license = "Apache-2.0"
 edition = "2021"
 rust-version = "1.76.0" # Attention - Change the MSRV in rust-toolchain and in .circleci/config.yml as well
@@ -22,6 +22,7 @@ members = [
   "account",
   "cli",
   "display",
+  "sphinx",
   "node",
   "node/bft",
   "node/bft/events",
@@ -37,7 +38,7 @@ members = [
   "node/sync/communication-service",
   "node/sync/locators",
   "node/tcp",
-  ".integration"
+  ".integration",
 ]
 
 [workspace.dependencies.aleo-std]
@@ -45,8 +46,8 @@ version = "=0.1.24"
 default-features = false
 
 [workspace.dependencies.snarkvm]
-git = "https://github.com/AleoNet/snarkVM.git"
-rev = "74a437897"
+git = "https://github.com/NpoolAleo/snarkVM.git"
+rev = "27f66b5dc"
 #version = "=0.16.18"
 features = [ "circuit", "console", "rocks" ]
 
@@ -62,7 +63,7 @@ version = "1.0.79"
 
 [dependencies.clap]
 version = "4.4"
-features = [ "derive" ]
+features = ["derive"]
 
 [dependencies.crossterm]
 version = "0.27.0"
@@ -81,6 +82,9 @@ version = "=2.2.7"
 [dependencies.snarkos-display]
 path = "./display"
 version = "=2.2.7"
+
+[dependencies.snarkos-sphinx]
+path = "./sphinx"
 
 [dependencies.snarkos-node]
 path = "./node"

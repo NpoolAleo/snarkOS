@@ -1,7 +1,7 @@
 [package]
 name = "snarkos-cli"
 version = "2.2.7"
-authors = [ "The Aleo Team <hello@aleo.org>" ]
+authors = ["The Aleo Team <hello@aleo.org>"]
 description = "A CLI for a decentralized operating system"
 homepage = "https://aleo.org"
 repository = "https://github.com/AleoHQ/snarkOS"
@@ -10,14 +10,14 @@ keywords = [
   "cryptography",
   "blockchain",
   "decentralized",
-  "zero-knowledge"
+  "zero-knowledge",
 ]
-categories = [ "cryptography", "operating-systems" ]
+categories = ["cryptography", "operating-systems"]
 license = "Apache-2.0"
 edition = "2021"
 
 [features]
-default = [ "snarkos-node/metrics" ]
+default = ["snarkos-node/metrics"]
 
 [dependencies.aleo-std]
 workspace = true
@@ -33,7 +33,7 @@ version = "1.0"
 
 [dependencies.clap]
 version = "4.4"
-features = [ "derive", "color", "unstable-styles" ]
+features = ["derive", "color", "unstable-styles"]
 
 [dependencies.colored]
 version = "2"
@@ -43,7 +43,7 @@ version = "0.27"
 
 [dependencies.indexmap]
 version = "2.1"
-features = [ "serde", "rayon" ]
+features = ["serde", "rayon"]
 
 [dependencies.metrics]
 package = "snarkos-node-metrics"
@@ -75,7 +75,7 @@ version = "1"
 
 [dependencies.serde_json]
 version = "1"
-features = [ "preserve_order" ]
+features = ["preserve_order"]
 
 [dependencies.snarkos-account]
 path = "../account"
@@ -111,21 +111,21 @@ version = "1.0"
 
 [dependencies.tokio]
 version = "1.28"
-features = [ "rt" ]
+features = ["rt"]
 
 [dependencies.tracing]
 version = "0.1"
 
 [dependencies.tracing-subscriber]
 version = "0.3"
-features = [ "env-filter" ]
+features = ["env-filter"]
 
 [dependencies.ureq]
 version = "2.9"
 
 [dependencies.zeroize]
 version = "1"
-features = [ "derive" ]
+features = ["derive"]
 
 [target."cfg(target_family = \"unix\")".dependencies.nix]
 version = "0.26"
