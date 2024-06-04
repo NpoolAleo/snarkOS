@@ -278,8 +278,8 @@ mod tests {
             let mut index = 0;
             while index < 5 {
                 index += 1;
-                let resp = SphinxTx::sync_transaction::<TestnetV0>(endpoint, transaction_id.to_string());
-                if let Ok(ret)=resp && ret{
+                let resp = SphinxTx::sync_transaction::<TestnetV0>(endpoint, transaction_id.to_string())?;
+                if resp{
                     break;
                 }
                 thread::sleep(time::Duration::from_secs(30))
