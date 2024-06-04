@@ -51,6 +51,9 @@ rev = "27f66b5dc"
 #version = "=0.16.18"
 features = [ "circuit", "console", "rocks" ]
 
+[lib]
+path = "snarkos/lib.rs"
+
 [[bin]]
 name = "snarkos"
 path = "snarkos/main.rs"
