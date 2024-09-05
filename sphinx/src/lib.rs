@@ -244,10 +244,13 @@ impl SphinxTx {
 mod tests {
     use super::*;
     use std::{thread, time};
-    use snarkvm::prelude::TestnetV0;
+    // use snarkvm::prelude::TestnetV0;
+    use snarkvm::prelude::MainnetV0;
 
     extern crate serde;
     extern crate serde_json;
+
+    type CurrentNetwork = MainnetV0;
 
     #[test]
     fn test_sphinx_tx() {
@@ -258,15 +261,15 @@ mod tests {
             let to: &str = "aleo1wa2p9vzu86mx4vjklwyvpgpcpt5hzqshn3av0ltvc9czym94vufqyc60m4";
             let amount = "500000001u64";
 
-            let authorization = SphinxTx::gen_tx_authorization::<TestnetV0>(private_key, to, amount)?;
+            let authorization = SphinxTx::gen_tx_authorization::<CurrentNetwork>(private_key, to, amount)?;
 
             let serialized = serde_json::to_string(&authorization).unwrap();
             let authorization = serde_json::from_str(&serialized).unwrap();
 
-            let execution = SphinxTx::gen_tx_execution::<TestnetV0>(endpoint, from, authorization)?;
+            let execution = SphinxTx::gen_tx_execution::<CurrentNetwork>(endpoint, from, authorization)?;
 
             let serialized = serde_json::to_string(&execution).unwrap();
-            let execution: Execution<TestnetV0> = serde_json::from_str(&serialized).unwrap();
+            let execution: Execution<CurrentNetwork> = serde_json::from_str(&serialized).unwrap();
 
             let authorization = SphinxTx::gen_fee_authorization(private_key, execution.clone())?;
 
@@ -278,7 +281,7 @@ mod tests {
             let mut index = 0;
             while index < 5 {
                 index += 1;
-                let resp = SphinxTx::sync_transaction::<TestnetV0>(endpoint, transaction_id.to_string())?;
+                let resp = SphinxTx::sync_transaction::<CurrentNetwork>(endpoint, transaction_id.to_string())?;
                 if resp{
                     break;
                 }
@@ -304,7 +307,7 @@ mod tests {
         let expected_view = String::from("AViewKey1eYEGtb78FVg38SSYyzAeXnBdnWCba5t5YxUxtkTtvNAE");
         let expected_pub = String::from("aleo1zecnqchckrzw7dlsyf65g6z5le2rmys403ecwmcafrag0e030yxqrnlg8j");
 
-        let acc = super::new_account::<TestnetV0>(seed).unwrap();
+        let acc = super::new_account::<CurrentNetwork>(seed).unwrap();
         assert_eq!(acc.private_key().to_string(), expected_pri);
         assert_eq!(acc.view_key().to_string(), expected_view);
         assert_eq!(acc.address().to_string(), expected_pub);
@@ -312,7 +315,7 @@ mod tests {
 
     #[test]
     fn test_new_account_without_seed() {
-        let acc = super::new_account::<TestnetV0>(None).unwrap();
+        let acc = super::new_account::<CurrentNetwork>(None).unwrap();
         assert_eq!(acc.private_key().to_string().len(), 59);
         assert_eq!(acc.view_key().to_string().len(), 53);
         assert_eq!(acc.address().to_string().len(), 63);
