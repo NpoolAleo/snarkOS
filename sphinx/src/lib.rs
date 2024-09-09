@@ -185,6 +185,7 @@ impl SphinxTx {
 
         match ureq::get(&format!("{query_url}/transaction/{transaction_id}")).call() {
             Ok(resp) => {
+                println!("ssssssssssssssssss:{:#?}",resp.status_text().to_string());
                 let resp_text = resp.status_text().to_string();
                 if !resp_text.contains("OK") {
                     return Ok(false);
