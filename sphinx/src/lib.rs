@@ -190,6 +190,7 @@ impl SphinxTx {
                 if !resp_text.contains("OK") {
                     return Ok(false);
                 }
+                bail!(resp.status_text().to_string())
             }
             Err(error) => {
                 bail!(error.to_string())
