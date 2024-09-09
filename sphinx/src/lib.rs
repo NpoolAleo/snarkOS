@@ -207,11 +207,7 @@ impl SphinxTx {
                 }
             }
             Err(error) => {
-                let err_text = format!("{:#?}", error);
-                if err_text.contains("Internal Server Error") {
-                    return Ok(false);
-                }
-                bail!(err_text)
+                bail!(error.to_string())
             }
         }
     }
