@@ -185,12 +185,11 @@ impl SphinxTx {
 
         match ureq::get(&format!("{query_url}/transaction/{transaction_id}")).call() {
             Ok(resp) => {
-                println!("ssssssssssssssssss:{:#?}",resp.status_text().to_string());
-                let resp_text = resp.status_text().to_string();
-                if !resp_text.contains("OK") {
+                let status_code = resp.status();
+                if !status_code==200 {
                     return Ok(false);
                 }
-                bail!(resp.status_text().to_string())
+                // bail!(resp.status_text().to_string())
             }
             Err(error) => {
                 bail!(error.to_string())
@@ -199,7 +198,7 @@ impl SphinxTx {
 
         match ureq::get(&format!("{query_url}/transaction/confirmed/{transaction_id}")).call() {
             Ok(resp) => {
-                let resp_text = resp.status_text().to_string();
+                let resp_text = resp.into_string()?;
                 if resp_text.contains("\"status\": \"accepted\"") {
                     return Ok(true);
                 }else if resp_text.contains("\"status\": \"rejected\"")  {
