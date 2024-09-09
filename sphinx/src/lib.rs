@@ -11,7 +11,6 @@
 // WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 // See the License for the specific language governing permissions and
 // limitations under the License.
-
 use anyhow::{anyhow, bail, ensure, Result};
 use colored::Colorize;
 use core::str::FromStr;
@@ -94,7 +93,7 @@ impl SphinxTx {
         // Check if the public balance is sufficient.
         // Fetch the public balance.
         let public_balance = SphinxTx::get_public_balance::<N>(from, endpoint)?;
-
+        println!("balancecccccc:{public_balance}");
         // base fee,That's it for now
         let base_fee = 1388;
         // If the public balance is insufficient, return an error.
@@ -183,13 +182,29 @@ impl SphinxTx {
     pub fn sync_transaction<N: Network>(endpoint: &str, transaction_id: String) -> Result<bool> {
         let net_name = SphinxTx::get_url_prefix::<N>()?;
         let query_url = format!("{}/{}", endpoint, net_name);
+
         match ureq::get(&format!("{query_url}/transaction/{transaction_id}")).call() {
             Ok(resp) => {
                 let resp_text = resp.status_text().to_string();
-                if resp_text.contains("OK") {
-                    return Ok(true);
+                if !resp_text.contains("OK") {
+                    return Ok(false);
                 }
-                bail!(resp_text)
+            }
+            Err(error) => {
+                bail!(error.to_string())
+            }
+        }
+
+        match ureq::get(&format!("{query_url}/transaction/confirmed/{transaction_id}")).call() {
+            Ok(resp) => {
+                let resp_text = resp.status_text().to_string();
+                if resp_text.contains("\"status\": \"accepted\"") {
+                    return Ok(true);
+                }else if resp_text.contains("\"status\": \"rejected\"")  {
+                    bail!("transaction is rejected")
+                }else{
+                    return Ok(false);
+                }
             }
             Err(error) => {
                 let err_text = format!("{:#?}", error);
@@ -246,10 +261,6 @@ mod tests {
     use std::{thread, time};
     // use snarkvm::prelude::TestnetV0;
     use snarkvm::prelude::MainnetV0;
-
-    extern crate serde;
-    extern crate serde_json;
-
     type CurrentNetwork = MainnetV0;
 
     #[test]
@@ -258,7 +269,7 @@ mod tests {
             let endpoint = "http://127.0.0.1:3030";
             let private_key = "APrivateKey1zkp8CZNn3yeCseEtxuVPbDCwSyhGW6yZKUYKfgXmcpoGPWH";
             let from: &str = "aleo1rhgdu77hgyqd3xjj8ucu3jj9r2krwz6mnzyd80gncr5fxcwlh5rsvzp9px";
-            let to: &str = "aleo1wa2p9vzu86mx4vjklwyvpgpcpt5hzqshn3av0ltvc9czym94vufqyc60m4";
+            let to: &str = "aleo15mqx2nkc3dzwxknlcxc7pava80vm4cxs5grzf77jkl7xp9vfnqys8cc7hu";
             let amount = "500000001u64";
 
             let authorization = SphinxTx::gen_tx_authorization::<CurrentNetwork>(private_key, to, amount)?;
