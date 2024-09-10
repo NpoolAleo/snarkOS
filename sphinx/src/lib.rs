@@ -93,7 +93,6 @@ impl SphinxTx {
         // Check if the public balance is sufficient.
         // Fetch the public balance.
         let public_balance = SphinxTx::get_public_balance::<N>(from, endpoint)?;
-        println!("balancecccccc:{public_balance}");
         // base fee,That's it for now
         let base_fee = 1388;
         // If the public balance is insufficient, return an error.
