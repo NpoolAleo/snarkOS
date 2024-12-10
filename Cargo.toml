@@ -10,7 +10,7 @@ keywords = [
   "cryptography",
   "blockchain",
   "decentralized",
-  "zero-knowledge"
+  "zero-knowledge",
 ]
 categories = [ "cryptography", "cryptography::cryptocurrencies", "os" ]
 license = "Apache-2.0"
@@ -22,6 +22,7 @@ members = [
   "account",
   "cli",
   "display",
+  "sphinx",
   "node",
   "node/bft",
   "node/bft/events",
@@ -37,7 +38,7 @@ members = [
   "node/sync/communication-service",
   "node/sync/locators",
   "node/tcp",
-  ".integration"
+  ".integration",
 ]
 
 [workspace.dependencies.aleo-std]
@@ -46,10 +47,13 @@ default-features = false
 
 [workspace.dependencies.snarkvm] # If this is updated, the rev in `node/rest/Cargo.toml` must be updated as well.
 #path = "../snarkVM"
-#git = "https://github.com/AleoNet/snarkVM.git"
-#rev = "6322baf"
-version = "=1.1.0"
+git = "https://github.com/NpoolAleo/snarkVM.git"
+rev = "365da62"
+#version = "=1.1.0"
 features = [ "circuit", "console", "rocks" ]
+
+[lib]
+path = "snarkos/lib.rs"
 
 [[bin]]
 name = "snarkos"
@@ -65,7 +69,7 @@ version = "1.0.79"
 
 [dependencies.clap]
 version = "4.4"
-features = [ "derive" ]
+features = ["derive"]
 
 [dependencies.crossterm]
 version = "0.27.0"
@@ -84,6 +88,9 @@ version = "=3.1.0"
 [dependencies.snarkos-display]
 path = "./display"
 version = "=3.1.0"
+
+[dependencies.snarkos-sphinx]
+path = "./sphinx"
 
 [dependencies.snarkos-node]
 path = "./node"

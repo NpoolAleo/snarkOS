@@ -10,7 +10,7 @@ keywords = [
   "cryptography",
   "blockchain",
   "decentralized",
-  "zero-knowledge"
+  "zero-knowledge",
 ]
 categories = [ "cryptography", "cryptography::cryptocurrencies", "os" ]
 license = "Apache-2.0"
@@ -31,4 +31,4 @@ default-features = false
 
 [dependencies.snarkvm]
 workspace = true
-features = [ "console" ]
+features = ["console"]
