@@ -32,6 +32,7 @@ use snarkvm::{
     },
     synthesizer::process::execution_cost_v2,
 };
+use aleo_std_storage::StorageMode;
 
 pub fn new_account<N: Network>(seed: Option<String>) -> Result<snarkos_account::Account<N>> {
     // Recover the seed.
@@ -71,7 +72,7 @@ impl SphinxTx {
 
         // Initialize the VM.
         let store: ConsensusStore<N, ConsensusMemory<N>> =
-            ConsensusStore::<N, ConsensusMemory<N>>::open(None)?;
+            ConsensusStore::<N, ConsensusMemory<N>>::open(StorageMode::Production)?;
         let vm: VM<N, ConsensusMemory<N>> = VM::from(store.clone())?;
 
         // // Load the program and it's imports into the process.
@@ -108,11 +109,12 @@ impl SphinxTx {
         // Initialize an RNG.
         let rng = &mut rand::thread_rng();
         // Initialize the VM.
-        let store = ConsensusStore::<N, ConsensusMemory<N>>::open(None)?;
+        let store = ConsensusStore::<N, ConsensusMemory<N>>::open(StorageMode::Production)?;
         let vm: VM<N, ConsensusMemory<N>> = VM::from(store.clone())?;
 
         // Compute the execution.
-        vm.execute_authorization_raw(authorization, Some(query.clone()), rng)
+        let (execution, _) = vm.execute_authorization_raw(authorization, Some(query.clone()), rng)?;
+        Ok(execution)
     }
 
     pub fn gen_fee_authorization<N: Network>(
@@ -122,7 +124,7 @@ impl SphinxTx {
         // Initialize an RNG.
         let rng = &mut rand::thread_rng();
         // Initialize the VM.
-        let store = ConsensusStore::<N, ConsensusMemory<N>>::open(None)?;
+        let store = ConsensusStore::<N, ConsensusMemory<N>>::open(StorageMode::Production)?;
         let vm: VM<N, ConsensusMemory<N>> = VM::from(store.clone())?;
 
         let (minimum_execution_cost, (_, _)) = execution_cost_v2::<N>(&vm.process().read(), &execution)?;
@@ -146,7 +148,7 @@ impl SphinxTx {
         // Initialize an RNG.
         let rng = &mut rand::thread_rng();
         // Initialize the VM.
-        let store = ConsensusStore::<N, ConsensusMemory<N>>::open(None)?;
+        let store = ConsensusStore::<N, ConsensusMemory<N>>::open(StorageMode::Production)?;
         let vm: VM<N, ConsensusMemory<N>> = VM::from(store.clone())?;
 
         // Execute the fee.

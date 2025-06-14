@@ -163,6 +163,9 @@ tikv-jemallocator = "0.5"
 version = "0.1"
 optional = true
 
+[dependencies.base64ct]
+version = "=1.6.0"
+
 [dev-dependencies.rusty-hook]
 version = "0.11.2"
 

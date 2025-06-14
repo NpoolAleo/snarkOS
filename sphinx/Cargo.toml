@@ -44,6 +44,9 @@ features = ["preserve_order"]
 path = "../account"
 version = "=3.7.1"
 
+[dependencies.aleo-std-storage]
+version = "1.0.1"
+default-features = false
 
 [dependencies.snarkvm]
 workspace = true
